@@ -1,0 +1,161 @@
+# Agentic Conversation System Configuration
+# This file contains all configuration settings for the agentic conversation system.
+# Environment variables can be substituted using ${VAR_NAME} or ${VAR_NAME:default_value} syntax.
+
+# Agent Configuration
+# Define the two agents that will participate in the conversation
+agents:
+  # First agent configuration
+  agent_a:
+    # Human-readable name for the agent (used in logs and display)
+    name: "Researcher"
+
+    # System prompt that defines the agent's role, personality, and behavior
+    # This prompt will be prepended to every conversation turn for this agent
+    system_prompt: |
+      You are Dr. Sarah Chen, a thorough and methodical research scientist with expertise in artificial intelligence and machine learning. Your role in this conversation is to:
+
+      1. Ask probing, insightful questions that dig deeper into topics
+      2. Seek evidence and data to support claims and hypotheses
+      3. Identify potential gaps in reasoning or areas that need further investigation
+      4. Bring up relevant research, studies, or theoretical frameworks when appropriate
+      5. Challenge assumptions constructively and suggest alternative perspectives
+
+      Your communication style is:
+      - Analytical and detail-oriented
+      - Curious and inquisitive
+      - Professional but approachable
+      - Focused on understanding the "why" and "how" behind ideas
+
+      When engaging in conversation, always build upon what has been discussed previously and reference specific points made by your conversation partner. Keep your responses focused and substantive, typically 2-4 paragraphs in length.
+
+  # Second agent configuration
+  agent_b:
+    # Human-readable name for the agent
+    name: "Strategist"
+
+    # System prompt for the second agent
+    system_prompt: |
+      You are Marcus Rodriguez, a strategic business consultant and systems thinker with extensive experience in technology implementation and organizational change. Your role in this conversation is to:
+
+      1. Synthesize information and identify patterns across different domains
+      2. Focus on practical applications and real-world implications
+      3. Consider scalability, feasibility, and implementation challenges
+      4. Bridge the gap between theoretical concepts and actionable strategies
+      5. Evaluate risks, opportunities, and potential unintended consequences
+
+      Your communication style is:
+      - Strategic and big-picture oriented
+      - Pragmatic and solution-focused
+      - Collaborative and building on others' ideas
+      - Concerned with practical outcomes and measurable results
+
+      When responding, always acknowledge and build upon the research and insights shared by your conversation partner. Provide concrete examples, frameworks, or implementation approaches when possible. Keep your responses engaging and forward-thinking, typically 2-4 paragraphs in length.
+
+# Language Model Configuration
+# Settings for the underlying language model used by both agents
+model:
+  # Model name - can be overridden with MODEL_NAME environment variable
+  # Common options: "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "claude-3-opus", etc.
+  model_name: "${MODEL_NAME:gpt-4}"
+
+  # Temperature controls randomness in responses (0.0 = deterministic, 2.0 = very random)
+  # Lower values (0.1-0.3) for more focused, consistent responses
+  # Higher values (0.7-1.0) for more creative, varied responses
+  temperature: 0.7
+
+  # Maximum number of tokens the model can generate in a single response
+  # Typical values: 1000-4000 depending on desired response length
+  max_tokens: 2000
+
+  # Top-p (nucleus sampling) - controls diversity by considering only top p% of probability mass
+  # Values between 0.9-1.0 are typical (1.0 = consider all tokens)
+  top_p: 0.95
+
+  # Frequency penalty reduces repetition of tokens based on their frequency in the text
+  # Range: -2.0 to 2.0 (positive values discourage repetition)
+  frequency_penalty: 0.1
+
+  # Presence penalty reduces repetition of tokens based on whether they appear in the text
+  # Range: -2.0 to 2.0 (positive values encourage new topics)
+  presence_penalty: 0.1
+
+# Conversation Behavior Configuration
+# Settings that control how the conversation flows and is managed
+conversation:
+  # Maximum number of turns (back-and-forth exchanges) in the conversation
+  # Each turn consists of one response from each agent
+  # Typical values: 10-50 depending on desired conversation length
+  max_turns: 50
+
+  # Optional initial prompt to start the conversation
+  # If provided, this will be the first message that kicks off the dialogue
+  # If not provided, Agent A will start with their system prompt context
+  initial_prompt: |
+    Let's explore the future of artificial intelligence in education. Specifically, I'd like to discuss how AI tutoring systems might transform personalized learning, what challenges we need to overcome for widespread adoption, and what the implications might be for traditional educational institutions and teaching roles.
+
+    What are your initial thoughts on the most promising applications of AI in education, and what key research questions should we be investigating?
+
+  # Strategy for managing context window when it approaches token limits
+  # Options:
+  #   - "truncate": Remove oldest messages when limit is reached
+  #   - "summarize": Create summaries of older conversation parts (not yet implemented)
+  #   - "sliding": Maintain a sliding window of recent messages
+  context_window_strategy: "sliding"
+
+  # Maximum number of tokens to maintain in the context window
+  # Should be less than the model's maximum context length
+  # Typical values: 4000-16000 depending on model capabilities
+  context_window_size: 8000
+
+  # Maximum time to wait for an agent response (in seconds)
+  # Helps prevent hanging on slow API responses
+  turn_timeout: 45.0
+
+# Logging and Telemetry Configuration
+# Settings for capturing conversation data and system metrics
+logging:
+  # Logging level - controls verbosity of system logs
+  # Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+  # DEBUG: Very detailed information for troubleshooting
+  # INFO: General information about system operation
+  # WARNING: Important warnings that don't stop execution
+  # ERROR: Error conditions that may affect functionality
+  # CRITICAL: Serious errors that may cause system failure
+  log_level: "${LOG_LEVEL:INFO}"
+
+  # Directory where log files and conversation records will be saved
+  # Can be absolute or relative path
+  # Directory will be created if it doesn't exist
+  output_directory: "${LOG_DIR:./logs}"
+
+  # Whether to display the conversation in real-time in the console
+  # true: Show each message as it's generated
+  # false: Only show summary information
+  real_time_display: true
+
+  # List of export formats for conversation logs
+  # Options: "json", "csv", "txt"
+  # json: Structured data format with full metadata
+  # csv: Tabular format suitable for analysis
+  # txt: Human-readable plain text format
+  export_formats:
+    - "json"
+    - "txt"
+
+  # Whether to save complete conversation history to files
+  # Includes all messages, timestamps, and metadata
+  save_conversation_history: true
+
+  # Whether to save detailed telemetry data
+  # Includes performance metrics, token usage, error rates, etc.
+  save_telemetry: true
+# Example of environment variable usage:
+# You can override any of these settings using environment variables:
+#
+# export MODEL_NAME="gpt-3.5-turbo"
+# export LOG_LEVEL="DEBUG"
+# export LOG_DIR="/path/to/custom/logs"
+#
+# Or use default values if environment variables are not set:
+# ${MODEL_NAME:gpt-4} will use "gpt-4" if MODEL_NAME is not set

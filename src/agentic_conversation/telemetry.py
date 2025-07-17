@@ -1,0 +1,823 @@
+"""
+Telemetry and logging system for the agentic conversation system.
+
+This module provides comprehensive telemetry collection and logging capabilities
+for tracking agent interactions, performance metrics, and system behavior.
+"""
+
+import json
+import logging
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+from uuid import uuid4
+
+from .models import (
+    AgentMetrics,
+    ContextWindowSnapshot,
+    Message,
+    RunTelemetry,
+    ConversationState,
+    LoggingConfig
+)
+
+
+class TelemetryLogger:
+    """
+    Logger for capturing agent interactions and performance metrics in real-time.
+    
+    This class provides structured logging with JSON format for easy parsing and analysis.
+    It captures messages, response times, token counts, and other performance metrics.
+    """
+    
+    def __init__(self, config: LoggingConfig, run_id: Optional[str] = None):
+        """
+        Initialize the telemetry logger.
+        
+        Args:
+            config: Logging configuration
+            run_id: Optional run ID, will generate one if not provided
+        """
+        self.config = config
+        self.run_id = run_id or str(uuid4())
+        self.start_time = datetime.now()
+        
+        # Set up structured logger
+        self.logger = self._setup_logger()
+        
+        # Initialize telemetry data
+        self.agent_metrics: Dict[str, AgentMetrics] = {}
+        self.messages: List[Message] = []
+        self.context_snapshots: List[ContextWindowSnapshot] = []
+        self.errors: List[Dict[str, Any]] = []
+        
+        # Performance tracking
+        self._turn_start_times: Dict[str, float] = {}
+        
+        self.logger.info("Telemetry logger initialized", extra={
+            "event_data": {
+                "event_type": "telemetry_init",
+                "run_id": self.run_id,
+                "config": self.config.to_dict()
+            }
+        })
+    
+    def _setup_logger(self) -> logging.Logger:
+        """Set up the structured logger with JSON formatting."""
+        logger = logging.getLogger(f"telemetry.{self.run_id}")
+        logger.setLevel(getattr(logging, self.config.log_level))
+        
+        # Clear any existing handlers
+        logger.handlers.clear()
+        
+        # Create custom formatter for structured logging
+        class StructuredFormatter(logging.Formatter):
+            def format(self, record):
+                # Base log data
+                log_data = {
+                    "timestamp": self.formatTime(record),
+                    "level": record.levelname,
+                    "run_id": self.run_id,
+                    "message": record.getMessage()
+                }
+                
+                # Add extra fields if present
+                if hasattr(record, 'event_data'):
+                    log_data.update(record.event_data)
+                
+                return json.dumps(log_data)
+        
+        formatter = StructuredFormatter()
+        formatter.run_id = self.run_id
+        
+        # Console handler for real-time display
+        if self.config.real_time_display:
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            logger.addHandler(console_handler)
+        
+        # File handler for persistent logging
+        if self.config.output_directory:
+            log_dir = Path(self.config.output_directory)
+            log_dir.mkdir(parents=True, exist_ok=True)
+            
+            log_file = log_dir / f"telemetry_{self.run_id}.log"
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        
+        return logger
+    
+    def start_agent_turn(self, agent_id: str, context: Dict[str, Any] = None) -> None:
+        """
+        Log the start of an agent's turn.
+        
+        Args:
+            agent_id: Identifier of the agent starting their turn
+            context: Additional context information
+        """
+        self._turn_start_times[agent_id] = time.time()
+        
+        log_data = {
+            "event_type": "agent_turn_start",
+            "agent_id": agent_id,
+            "timestamp": datetime.now().isoformat(),
+            "context": context or {}
+        }
+        
+        self.logger.info(f"Agent {agent_id} turn started", extra={
+            "event_data": log_data
+        })
+    
+    def log_agent_response(
+        self,
+        agent_id: str,
+        message: Message,
+        response_time: Optional[float] = None,
+        model_calls: int = 1,
+        errors: Optional[List[str]] = None
+    ) -> None:
+        """
+        Log an agent's response with performance metrics.
+        
+        Args:
+            agent_id: Identifier of the responding agent
+            message: The message generated by the agent
+            response_time: Time taken to generate the response (auto-calculated if None)
+            model_calls: Number of model API calls made
+            errors: List of errors encountered during response generation
+        """
+        # Calculate response time if not provided
+        if response_time is None and agent_id in self._turn_start_times:
+            response_time = time.time() - self._turn_start_times[agent_id]
+            del self._turn_start_times[agent_id]
+        
+        # Create or update agent metrics
+        if agent_id not in self.agent_metrics:
+            self.agent_metrics[agent_id] = AgentMetrics()
+        
+        metrics = self.agent_metrics[agent_id]
+        metrics.response_time += response_time or 0.0
+        metrics.token_count += message.token_count
+        metrics.model_calls += model_calls
+        if errors:
+            metrics.errors.extend(errors)
+        
+        # Store the message
+        self.messages.append(message)
+        
+        # Log the response
+        log_data = {
+            "event_type": "agent_response",
+            "agent_id": agent_id,
+            "message": message.to_dict(),
+            "metrics": {
+                "response_time": response_time,
+                "token_count": message.token_count,
+                "model_calls": model_calls,
+                "errors": errors or []
+            }
+        }
+        
+        self.logger.info(f"Agent {agent_id} response logged", extra={
+            "event_data": log_data
+        })
+        
+        # Log errors separately if any
+        if errors:
+            for error in errors:
+                self.log_error(f"Agent {agent_id} error: {error}", {
+                    "agent_id": agent_id,
+                    "turn_context": message.to_dict()
+                })
+    
+    def log_context_snapshot(self, snapshot: ContextWindowSnapshot) -> None:
+        """
+        Log a context window utilization snapshot.
+        
+        Args:
+            snapshot: Context window snapshot to log
+        """
+        self.context_snapshots.append(snapshot)
+        
+        log_data = {
+            "event_type": "context_snapshot",
+            "snapshot": snapshot.to_dict()
+        }
+        
+        self.logger.info(f"Context snapshot: {snapshot.utilization_percentage:.1f}% utilized", extra={
+            "event_data": log_data
+        })
+        
+        # Warn if context is near capacity
+        if snapshot.is_near_capacity():
+            self.logger.warning(f"Context window near capacity: {snapshot.utilization_percentage:.1f}%", extra={
+                "event_data": log_data
+            })
+    
+    def log_conversation_state(self, state: ConversationState) -> None:
+        """
+        Log the current conversation state.
+        
+        Args:
+            state: Current conversation state
+        """
+        log_data = {
+            "event_type": "conversation_state",
+            "state": {
+                "current_turn": state.current_turn,
+                "total_messages": state.get_total_messages(),
+                "total_tokens": state.get_total_tokens(),
+                "status": state.status.value,
+                "context_utilization": state.get_context_utilization()
+            }
+        }
+        
+        self.logger.info(f"Conversation state: Turn {state.current_turn}, Status: {state.status.value}", extra={
+            "event_data": log_data
+        })
+    
+    def log_error(self, error_message: str, context: Dict[str, Any] = None) -> None:
+        """
+        Log an error with context information.
+        
+        Args:
+            error_message: Description of the error
+            context: Additional context information about the error
+        """
+        error_data = {
+            "timestamp": datetime.now().isoformat(),
+            "message": error_message,
+            "context": context or {}
+        }
+        
+        self.errors.append(error_data)
+        
+        log_data = {
+            "event_type": "error",
+            "error": error_data
+        }
+        
+        self.logger.error(error_message, extra={
+            "event_data": log_data
+        })
+    
+    def log_system_event(self, event_type: str, message: str, data: Dict[str, Any] = None) -> None:
+        """
+        Log a general system event.
+        
+        Args:
+            event_type: Type of the system event
+            message: Human-readable message describing the event
+            data: Additional data associated with the event
+        """
+        log_data = {
+            "event_type": event_type,
+            "data": data or {}
+        }
+        
+        self.logger.info(message, extra={
+            "event_data": log_data
+        })
+    
+    def get_current_metrics(self) -> Dict[str, Any]:
+        """
+        Get current telemetry metrics summary.
+        
+        Returns:
+            Dictionary containing current metrics summary
+        """
+        total_response_time = sum(metrics.response_time for metrics in self.agent_metrics.values())
+        total_tokens = sum(metrics.token_count for metrics in self.agent_metrics.values())
+        total_model_calls = sum(metrics.model_calls for metrics in self.agent_metrics.values())
+        # Count errors from both agent metrics and general errors
+        agent_errors = sum(len(metrics.errors) for metrics in self.agent_metrics.values())
+        total_errors = agent_errors + len(self.errors)
+        
+        return {
+            "run_id": self.run_id,
+            "start_time": self.start_time.isoformat(),
+            "duration": (datetime.now() - self.start_time).total_seconds(),
+            "total_messages": len(self.messages),
+            "total_response_time": total_response_time,
+            "total_tokens": total_tokens,
+            "total_model_calls": total_model_calls,
+            "total_errors": total_errors,
+            "average_response_time": total_response_time / total_model_calls if total_model_calls > 0 else 0.0,
+            "agent_metrics": {
+                agent_id: metrics.to_dict() 
+                for agent_id, metrics in self.agent_metrics.items()
+            },
+            "context_snapshots_count": len(self.context_snapshots),
+            "peak_context_utilization": max(
+                (s.utilization_percentage for s in self.context_snapshots), 
+                default=0.0
+            )
+        }
+    
+    def create_run_telemetry(
+        self, 
+        configuration: Optional[Dict[str, Any]] = None,
+        end_time: Optional[datetime] = None
+    ) -> RunTelemetry:
+        """
+        Create a complete RunTelemetry object from collected data.
+        
+        Args:
+            configuration: System configuration used for the run
+            end_time: End time of the run (defaults to now)
+            
+        Returns:
+            Complete RunTelemetry object
+        """
+        return RunTelemetry(
+            run_id=self.run_id,
+            start_time=self.start_time,
+            end_time=end_time or datetime.now(),
+            total_turns=len(self.messages),
+            agent_metrics=self.agent_metrics.copy(),
+            conversation_history=self.messages.copy(),
+            context_window_snapshots=self.context_snapshots.copy(),
+            configuration=configuration,
+            metadata={
+                "total_errors": len(self.errors),
+                "error_details": self.errors.copy()
+            }
+        )
+    
+    def finalize(self, configuration: Optional[Dict[str, Any]] = None) -> RunTelemetry:
+        """
+        Finalize the telemetry logging and return complete run data.
+        
+        Args:
+            configuration: System configuration used for the run
+            
+        Returns:
+            Complete RunTelemetry object
+        """
+        end_time = datetime.now()
+        run_telemetry = self.create_run_telemetry(configuration, end_time)
+        
+        # Log final summary
+        summary = self.get_current_metrics()
+        self.logger.info("Telemetry logging finalized", extra={
+            "event_data": {"event_type": "telemetry_finalized", "summary": summary}
+        })
+        
+        # Close all handlers to release file locks
+        self.close()
+        
+        return run_telemetry
+    
+    def close(self) -> None:
+        """Close all logger handlers to release file locks."""
+        for handler in self.logger.handlers[:]:
+            handler.close()
+            self.logger.removeHandler(handler)
+
+
+class RunLogger:
+    """
+    Logger for managing individual conversation run logs.
+    
+    This class handles log file management with unique run IDs and timestamps,
+    supports multiple export formats, and provides methods for log aggregation and analysis.
+    """
+    
+    def __init__(self, config: LoggingConfig, output_directory: Optional[str] = None):
+        """
+        Initialize the run logger.
+        
+        Args:
+            config: Logging configuration
+            output_directory: Optional override for output directory
+        """
+        self.config = config
+        self.output_directory = Path(output_directory or config.output_directory)
+        self.output_directory.mkdir(parents=True, exist_ok=True)
+        
+        # Track active runs
+        self.active_runs: Dict[str, RunTelemetry] = {}
+        
+        # Set up main logger
+        self.logger = self._setup_logger()
+    
+    def _setup_logger(self) -> logging.Logger:
+        """Set up the run logger."""
+        logger = logging.getLogger("run_logger")
+        logger.setLevel(getattr(logging, self.config.log_level))
+        
+        # Clear any existing handlers
+        logger.handlers.clear()
+        
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s'
+        )
+        
+        # Console handler if real-time display is enabled
+        if self.config.real_time_display:
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            logger.addHandler(console_handler)
+        
+        # File handler for run management logs
+        log_file = self.output_directory / "run_manager.log"
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        
+        return logger
+    
+    def start_run(self, run_id: str, configuration: Dict[str, Any]) -> str:
+        """
+        Start tracking a new conversation run.
+        
+        Args:
+            run_id: Unique identifier for the run
+            configuration: System configuration for the run
+            
+        Returns:
+            The run ID (for convenience)
+        """
+        if run_id in self.active_runs:
+            raise ValueError(f"Run {run_id} is already active")
+        
+        run_telemetry = RunTelemetry(
+            run_id=run_id,
+            start_time=datetime.now(),
+            configuration=configuration
+        )
+        
+        self.active_runs[run_id] = run_telemetry
+        
+        self.logger.info(f"Started tracking run {run_id}")
+        return run_id
+    
+    def update_run(self, run_id: str, telemetry_data: RunTelemetry) -> None:
+        """
+        Update an active run with new telemetry data.
+        
+        Args:
+            run_id: Run identifier
+            telemetry_data: Updated telemetry data
+        """
+        if run_id not in self.active_runs:
+            raise ValueError(f"Run {run_id} is not active")
+        
+        self.active_runs[run_id] = telemetry_data
+        self.logger.debug(f"Updated run {run_id} with new telemetry data")
+    
+    def complete_run(self, run_id: str, final_telemetry: RunTelemetry) -> None:
+        """
+        Complete a run and save its data to files.
+        
+        Args:
+            run_id: Run identifier
+            final_telemetry: Final telemetry data for the run
+        """
+        if run_id not in self.active_runs:
+            raise ValueError(f"Run {run_id} is not active")
+        
+        # Update with final data
+        self.active_runs[run_id] = final_telemetry
+        
+        # Save to files in requested formats
+        self._save_run_data(run_id, final_telemetry)
+        
+        # Remove from active runs
+        del self.active_runs[run_id]
+        
+        self.logger.info(f"Completed and saved run {run_id}")
+    
+    def _save_run_data(self, run_id: str, telemetry: RunTelemetry) -> None:
+        """
+        Save run data in the configured export formats.
+        
+        Args:
+            run_id: Run identifier
+            telemetry: Telemetry data to save
+        """
+        timestamp = telemetry.start_time.strftime("%Y%m%d_%H%M%S")
+        base_filename = f"run_{run_id}_{timestamp}"
+        
+        for format_type in self.config.export_formats:
+            if format_type == "json":
+                self._save_json(base_filename, telemetry)
+            elif format_type == "csv":
+                self._save_csv(base_filename, telemetry)
+            elif format_type == "txt":
+                self._save_txt(base_filename, telemetry)
+            else:
+                self.logger.warning(f"Unknown export format: {format_type}")
+    
+    def _save_json(self, base_filename: str, telemetry: RunTelemetry) -> None:
+        """Save telemetry data as JSON."""
+        filename = self.output_directory / f"{base_filename}.json"
+        
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(telemetry.to_dict(), f, indent=2, ensure_ascii=False)
+            self.logger.debug(f"Saved JSON data to {filename}")
+        except Exception as e:
+            self.logger.error(f"Failed to save JSON data: {e}")
+    
+    def _save_csv(self, base_filename: str, telemetry: RunTelemetry) -> None:
+        """Save telemetry data as CSV."""
+        import csv
+        
+        # Save conversation messages as CSV
+        messages_filename = self.output_directory / f"{base_filename}_messages.csv"
+        try:
+            with open(messages_filename, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['timestamp', 'agent_id', 'content', 'token_count', 'metadata'])
+                
+                for msg in telemetry.conversation_history:
+                    writer.writerow([
+                        msg.timestamp.isoformat(),
+                        msg.agent_id,
+                        msg.content,
+                        msg.token_count,
+                        json.dumps(msg.metadata)
+                    ])
+            self.logger.debug(f"Saved messages CSV to {messages_filename}")
+        except Exception as e:
+            self.logger.error(f"Failed to save messages CSV: {e}")
+        
+        # Save metrics summary as CSV
+        metrics_filename = self.output_directory / f"{base_filename}_metrics.csv"
+        try:
+            with open(metrics_filename, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['metric', 'value'])
+                
+                # Basic run info
+                writer.writerow(['run_id', telemetry.run_id])
+                writer.writerow(['start_time', telemetry.start_time.isoformat()])
+                writer.writerow(['end_time', telemetry.end_time.isoformat() if telemetry.end_time else ''])
+                writer.writerow(['duration_seconds', telemetry.get_duration() or 0])
+                writer.writerow(['total_turns', telemetry.total_turns])
+                writer.writerow(['total_tokens', telemetry.get_total_tokens_used()])
+                writer.writerow(['total_model_calls', telemetry.get_total_model_calls()])
+                writer.writerow(['total_errors', telemetry.get_total_errors()])
+                writer.writerow(['average_response_time', telemetry.get_average_response_time()])
+                writer.writerow(['peak_context_utilization', telemetry.get_peak_context_utilization()])
+                
+                # Agent-specific metrics
+                for agent_id, metrics in telemetry.agent_metrics.items():
+                    writer.writerow([f'{agent_id}_response_time', metrics.response_time])
+                    writer.writerow([f'{agent_id}_token_count', metrics.token_count])
+                    writer.writerow([f'{agent_id}_model_calls', metrics.model_calls])
+                    writer.writerow([f'{agent_id}_error_count', len(metrics.errors)])
+            
+            self.logger.debug(f"Saved metrics CSV to {metrics_filename}")
+        except Exception as e:
+            self.logger.error(f"Failed to save metrics CSV: {e}")
+    
+    def _save_txt(self, base_filename: str, telemetry: RunTelemetry) -> None:
+        """Save telemetry data as human-readable text."""
+        filename = self.output_directory / f"{base_filename}.txt"
+        
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(f"Conversation Run Report\n")
+                f.write(f"{'=' * 50}\n\n")
+                
+                # Run summary
+                f.write(f"Run ID: {telemetry.run_id}\n")
+                f.write(f"Start Time: {telemetry.start_time}\n")
+                f.write(f"End Time: {telemetry.end_time or 'N/A'}\n")
+                f.write(f"Duration: {telemetry.get_duration() or 0:.2f} seconds\n")
+                f.write(f"Total Turns: {telemetry.total_turns}\n")
+                f.write(f"Total Tokens: {telemetry.get_total_tokens_used()}\n")
+                f.write(f"Total Model Calls: {telemetry.get_total_model_calls()}\n")
+                f.write(f"Total Errors: {telemetry.get_total_errors()}\n")
+                f.write(f"Average Response Time: {telemetry.get_average_response_time():.2f}s\n")
+                f.write(f"Peak Context Utilization: {telemetry.get_peak_context_utilization():.1f}%\n\n")
+                
+                # Agent metrics
+                f.write("Agent Performance\n")
+                f.write("-" * 20 + "\n")
+                for agent_id, metrics in telemetry.agent_metrics.items():
+                    f.write(f"\n{agent_id}:\n")
+                    f.write(f"  Response Time: {metrics.response_time:.2f}s\n")
+                    f.write(f"  Tokens Generated: {metrics.token_count}\n")
+                    f.write(f"  Model Calls: {metrics.model_calls}\n")
+                    f.write(f"  Errors: {len(metrics.errors)}\n")
+                    if metrics.errors:
+                        f.write(f"  Error Details:\n")
+                        for error in metrics.errors:
+                            f.write(f"    - {error}\n")
+                
+                # Conversation history
+                f.write(f"\n\nConversation History\n")
+                f.write("-" * 20 + "\n")
+                for i, msg in enumerate(telemetry.conversation_history, 1):
+                    f.write(f"\nTurn {i} - {msg.agent_id} ({msg.timestamp}):\n")
+                    f.write(f"Tokens: {msg.token_count}\n")
+                    f.write(f"Content: {msg.content}\n")
+                    if msg.metadata:
+                        f.write(f"Metadata: {json.dumps(msg.metadata, indent=2)}\n")
+                
+                # Context snapshots
+                if telemetry.context_window_snapshots:
+                    f.write(f"\n\nContext Window Utilization\n")
+                    f.write("-" * 30 + "\n")
+                    for snapshot in telemetry.context_window_snapshots:
+                        f.write(f"Turn {snapshot.turn_number}: {snapshot.utilization_percentage:.1f}% "
+                               f"({snapshot.total_tokens - snapshot.available_tokens}/{snapshot.total_tokens} tokens)")
+                        if snapshot.strategy_applied:
+                            f.write(f" - Strategy: {snapshot.strategy_applied}")
+                        f.write("\n")
+            
+            self.logger.debug(f"Saved text report to {filename}")
+        except Exception as e:
+            self.logger.error(f"Failed to save text report: {e}")
+    
+    def get_active_runs(self) -> List[str]:
+        """Get list of currently active run IDs."""
+        return list(self.active_runs.keys())
+    
+    def get_run_status(self, run_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get status information for a specific run.
+        
+        Args:
+            run_id: Run identifier
+            
+        Returns:
+            Dictionary with run status information, or None if run not found
+        """
+        if run_id not in self.active_runs:
+            return None
+        
+        telemetry = self.active_runs[run_id]
+        return {
+            "run_id": run_id,
+            "start_time": telemetry.start_time.isoformat(),
+            "duration": (datetime.now() - telemetry.start_time).total_seconds(),
+            "total_turns": telemetry.total_turns,
+            "total_messages": len(telemetry.conversation_history),
+            "is_completed": telemetry.is_completed()
+        }
+    
+    def list_saved_runs(self) -> List[Dict[str, Any]]:
+        """
+        List all saved run files in the output directory.
+        
+        Returns:
+            List of dictionaries with run file information
+        """
+        saved_runs = []
+        
+        # Look for JSON files (primary format)
+        for json_file in self.output_directory.glob("run_*.json"):
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                saved_runs.append({
+                    "run_id": data.get("run_id"),
+                    "start_time": data.get("start_time"),
+                    "end_time": data.get("end_time"),
+                    "total_turns": data.get("total_turns", 0),
+                    "file_path": str(json_file),
+                    "file_size": json_file.stat().st_size
+                })
+            except Exception as e:
+                self.logger.warning(f"Could not read run file {json_file}: {e}")
+        
+        return sorted(saved_runs, key=lambda x: x["start_time"] or "", reverse=True)
+    
+    def load_run_data(self, run_id: str) -> Optional[RunTelemetry]:
+        """
+        Load run data from saved files.
+        
+        Args:
+            run_id: Run identifier
+            
+        Returns:
+            RunTelemetry object if found, None otherwise
+        """
+        # Look for JSON file with this run_id
+        for json_file in self.output_directory.glob(f"run_{run_id}_*.json"):
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                return RunTelemetry.from_dict(data)
+            except Exception as e:
+                self.logger.error(f"Failed to load run data from {json_file}: {e}")
+        
+        return None
+    
+    def aggregate_runs(self, run_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        Aggregate statistics across multiple runs.
+        
+        Args:
+            run_ids: Optional list of specific run IDs to aggregate. 
+                    If None, aggregates all saved runs.
+            
+        Returns:
+            Dictionary with aggregated statistics
+        """
+        if run_ids is None:
+            # Get all saved runs
+            saved_runs = self.list_saved_runs()
+            run_ids = [run["run_id"] for run in saved_runs if run["run_id"]]
+        
+        if not run_ids:
+            return {"error": "No runs found to aggregate"}
+        
+        # Load run data
+        runs_data = []
+        for run_id in run_ids:
+            run_data = self.load_run_data(run_id)
+            if run_data:
+                runs_data.append(run_data)
+        
+        if not runs_data:
+            return {"error": "No valid run data found"}
+        
+        # Calculate aggregated statistics
+        total_runs = len(runs_data)
+        total_turns = sum(run.total_turns for run in runs_data)
+        total_tokens = sum(run.get_total_tokens_used() for run in runs_data)
+        total_model_calls = sum(run.get_total_model_calls() for run in runs_data)
+        total_errors = sum(run.get_total_errors() for run in runs_data)
+        
+        # Calculate averages
+        avg_turns_per_run = total_turns / total_runs if total_runs > 0 else 0
+        avg_tokens_per_run = total_tokens / total_runs if total_runs > 0 else 0
+        avg_response_time = sum(run.get_average_response_time() for run in runs_data) / total_runs if total_runs > 0 else 0
+        
+        # Find peak context utilization across all runs
+        peak_context_utilization = max(
+            (run.get_peak_context_utilization() for run in runs_data),
+            default=0.0
+        )
+        
+        # Calculate duration statistics
+        durations = [run.get_duration() for run in runs_data if run.get_duration() is not None]
+        avg_duration = sum(durations) / len(durations) if durations else 0
+        min_duration = min(durations) if durations else 0
+        max_duration = max(durations) if durations else 0
+        
+        return {
+            "aggregation_summary": {
+                "total_runs": total_runs,
+                "run_ids": run_ids,
+                "aggregated_at": datetime.now().isoformat()
+            },
+            "conversation_metrics": {
+                "total_turns": total_turns,
+                "average_turns_per_run": avg_turns_per_run,
+                "total_tokens": total_tokens,
+                "average_tokens_per_run": avg_tokens_per_run,
+                "total_model_calls": total_model_calls,
+                "total_errors": total_errors
+            },
+            "performance_metrics": {
+                "average_response_time": avg_response_time,
+                "peak_context_utilization": peak_context_utilization,
+                "average_duration": avg_duration,
+                "min_duration": min_duration,
+                "max_duration": max_duration
+            }
+        }
+    
+    def cleanup_old_runs(self, days_old: int = 30) -> int:
+        """
+        Clean up run files older than specified days.
+        
+        Args:
+            days_old: Number of days after which to delete files
+            
+        Returns:
+            Number of files deleted
+        """
+        cutoff_time = datetime.now() - timedelta(days=days_old)
+        deleted_count = 0
+        
+        # Find all run files
+        for pattern in ["run_*.json", "run_*.csv", "run_*.txt"]:
+            for file_path in self.output_directory.glob(pattern):
+                try:
+                    file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+                    if file_time < cutoff_time:
+                        file_path.unlink()
+                        deleted_count += 1
+                        self.logger.info(f"Deleted old run file: {file_path}")
+                except Exception as e:
+                    self.logger.warning(f"Could not delete file {file_path}: {e}")
+        
+        return deleted_count
+    
+    def close(self) -> None:
+        """Close all logger handlers to release file locks."""
+        for handler in self.logger.handlers[:]:
+            handler.close()
+            self.logger.removeHandler(handler)
