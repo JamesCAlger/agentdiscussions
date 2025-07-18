@@ -820,19 +820,21 @@ class TestLangChainAgent:
         """Test message conversion to LangChain format."""
         from src.agentic_conversation.langchain_agent import LangChainAgent
         from unittest.mock import patch, Mock
+        import os
         
         # Mock the LLM creation to avoid API calls
-        with patch.object(LangChainAgent, '_create_llm') as mock_create_llm:
-            mock_llm = Mock()
-            mock_create_llm.return_value = mock_llm
-            
-            agent = LangChainAgent(
-                agent_id="test_agent",
-                name="Test Agent",
-                system_prompt="Test prompt",
-                model_config=model_config,
-                token_counter=token_counter
-            )
+        with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-key'}):
+            with patch.object(LangChainAgent, '_create_llm') as mock_create_llm:
+                mock_llm = Mock()
+                mock_create_llm.return_value = mock_llm
+                
+                agent = LangChainAgent(
+                    agent_id="test_agent",
+                    name="Test Agent",
+                    system_prompt="Test prompt",
+                    model_config=model_config,
+                    token_counter=token_counter
+                )
             
             # Create test messages
             messages = [

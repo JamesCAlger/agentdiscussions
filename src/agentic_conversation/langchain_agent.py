@@ -21,7 +21,7 @@ from .agents import (
     AgentError, AgentTimeoutError, AgentValidationError,
     AgentResponseError, AgentConfigurationError
 )
-from .models import ModelConfig, Message
+from .models import ModelConfig, Message, AgentConfig
 from .token_counter import TokenCounter, ModelType
 
 
@@ -36,9 +36,10 @@ class LangChainAgent(BaseAgent):
     def __init__(
         self,
         agent_id: str,
-        name: str,
-        system_prompt: str,
-        model_config: ModelConfig,
+        name: Optional[str] = None,
+        system_prompt: Optional[str] = None,
+        model_config: Optional[ModelConfig] = None,
+        agent_config: Optional[AgentConfig] = None,
         token_counter: Optional[TokenCounter] = None,
         max_retries: int = 3,
         retry_delay: float = 1.0,
@@ -49,15 +50,40 @@ class LangChainAgent(BaseAgent):
         
         Args:
             agent_id: Unique identifier for this agent
-            name: Human-readable name for the agent
-            system_prompt: System prompt that defines the agent's behavior
+            name: Human-readable name for the agent (or from agent_config)
+            system_prompt: System prompt that defines the agent's behavior (or from agent_config)
             model_config: Configuration for the language model
+            agent_config: Alternative agent configuration (for test compatibility)
             token_counter: Token counter for tracking usage (optional)
             max_retries: Maximum number of retry attempts for failed requests
             retry_delay: Initial delay between retries (exponential backoff)
             timeout: Timeout for individual LLM requests in seconds
         """
-        super().__init__(agent_id, name, system_prompt)
+        # Handle both interfaces - direct params or agent_config
+        if agent_config:
+            actual_name = agent_config.name
+            actual_system_prompt = agent_config.system_prompt
+            self.agent_config = agent_config
+        else:
+            actual_name = name
+            actual_system_prompt = system_prompt
+            self.agent_config = None
+            
+        # Validate required parameters
+        if not actual_name:
+            raise ValueError("Agent name must be provided either directly or via agent_config")
+        if not actual_system_prompt:
+            raise ValueError("System prompt must be provided either directly or via agent_config")
+        if not model_config:
+            raise ValueError("Model configuration must be provided")
+            
+        # Check for API key if using OpenAI models
+        if model_config and ("gpt" in model_config.model_name.lower() or "openai" in model_config.model_name.lower()):
+            import os
+            if not os.getenv('OPENAI_API_KEY'):
+                raise ValueError("API key required for OpenAI models. Set OPENAI_API_KEY environment variable.")
+        
+        super().__init__(agent_id, actual_name, actual_system_prompt)
         
         self.model_config = model_config
         self.token_counter = token_counter or TokenCounter()
@@ -71,7 +97,7 @@ class LangChainAgent(BaseAgent):
         # Validate configuration
         self._validate_configuration()
         
-        self.logger.info(f"Initialized LangChain agent '{name}' with model '{model_config.model_name}'")
+        self.logger.info(f"Initialized LangChain agent '{actual_name}' with model '{model_config.model_name}'")
     
     def _create_llm(self) -> BaseChatModel:
         """
@@ -200,6 +226,28 @@ class LangChainAgent(BaseAgent):
         
         return messages
     
+    async def _call_llm(self, messages: List[BaseMessage]) -> str:
+        """
+        Call the LLM with the given messages. This method is used for mocking in tests.
+        
+        Args:
+            messages: Prepared message sequence
+            
+        Returns:
+            str: Response content from the LLM
+        """
+        response = await self.llm.ainvoke(messages)
+        
+        # Extract content from response
+        if hasattr(response, 'content'):
+            content = response.content
+        elif hasattr(response, 'text'):
+            content = response.text
+        else:
+            content = str(response)
+            
+        return content.strip() if content else ""
+    
     async def _generate_response_with_retry(
         self, 
         messages: List[BaseMessage]
@@ -225,9 +273,9 @@ class LangChainAgent(BaseAgent):
             try:
                 start_time = time.time()
                 
-                # Make the LLM call with timeout
-                response = await asyncio.wait_for(
-                    self.llm.ainvoke(messages),
+                # Make the LLM call with timeout using the mockable method
+                content = await asyncio.wait_for(
+                    self._call_llm(messages),
                     timeout=self.timeout
                 )
                 
@@ -235,14 +283,6 @@ class LangChainAgent(BaseAgent):
                 call_time = end_time - start_time
                 total_time += call_time
                 model_calls += 1
-                
-                # Extract content from response
-                if hasattr(response, 'content'):
-                    content = response.content
-                elif hasattr(response, 'text'):
-                    content = response.text
-                else:
-                    content = str(response)
                 
                 if not content or not content.strip():
                     raise AgentResponseError(

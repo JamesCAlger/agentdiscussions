@@ -68,7 +68,7 @@ class ConversationOrchestrator:
     
     def __init__(
         self,
-        orchestrator_id: Optional[str] = None,
+        orchestrator_id_or_config: Optional[Union[str, SystemConfig]] = None,
         config: Optional[SystemConfig] = None,
         config_path: Optional[Union[str, Path]] = None
     ):
@@ -76,14 +76,23 @@ class ConversationOrchestrator:
         Initialize the conversation orchestrator.
         
         Args:
-            orchestrator_id: Optional unique identifier for this orchestrator
+            orchestrator_id_or_config: Either orchestrator ID (str) or SystemConfig object
             config: Optional pre-loaded system configuration
             config_path: Optional path to configuration file
             
         Raises:
             OrchestrationError: If initialization fails
         """
-        self.orchestrator_id = orchestrator_id or f"orchestrator_{int(time.time())}"
+        # Handle flexible parameter passing
+        if isinstance(orchestrator_id_or_config, SystemConfig):
+            # First parameter is a config object
+            self.orchestrator_id = f"orchestrator_{int(time.time())}"
+            actual_config = orchestrator_id_or_config
+        else:
+            # First parameter is orchestrator_id (or None)
+            self.orchestrator_id = orchestrator_id_or_config or f"orchestrator_{int(time.time())}"
+            actual_config = config
+            
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         
         # Initialize components
@@ -102,8 +111,8 @@ class ConversationOrchestrator:
         self.max_recovery_attempts = 3
         
         # Load configuration
-        if config is not None:
-            self.config = config
+        if actual_config is not None:
+            self.config = actual_config
         elif config_path is not None:
             self._load_configuration(config_path)
         else:
@@ -248,7 +257,14 @@ class ConversationOrchestrator:
             output_directory=self.config.logging.output_directory
         )
         
+        # Initialize telemetry logger with a default run ID for testing
+        self.telemetry_logger = TelemetryLogger(
+            config=self.config.logging,
+            run_id="default"
+        )
+        
         self.logger.debug(f"Initialized run logger with output directory: {self.config.logging.output_directory}")
+        self.logger.debug("Initialized telemetry logger")
     
     def _initialize_conversation_graph(self) -> None:
         """Initialize the LangGraph conversation orchestrator."""

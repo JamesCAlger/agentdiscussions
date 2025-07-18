@@ -83,8 +83,8 @@ class TestPerformanceScenarios:
                     # Performance assertions
                     assert duration < 5.0  # Should complete within 5 seconds
                     assert memory_used < 50  # Should use less than 50MB additional memory
-                    assert result.status in [ConversationStatus.COMPLETED, ConversationStatus.MAX_TURNS_REACHED]
-                    assert result.current_turn > 0
+                    assert result["status"] in [ConversationStatus.COMPLETED.value, ConversationStatus.TERMINATED.value]
+                    assert result["total_turns"] > 0
     
     @pytest.mark.asyncio
     async def test_concurrent_conversations_performance(self, performance_config, mock_fast_responses):
@@ -117,9 +117,9 @@ class TestPerformanceScenarios:
                         return {
                             'conversation_id': conv_id,
                             'duration': end_time - start_time,
-                            'status': result.status,
-                            'turns': result.current_turn,
-                            'message_count': len(result.messages)
+                            'status': result["status"],
+                            'turns': result["total_turns"],
+                            'message_count': result["total_messages"]
                         }
         
         # Run multiple conversations concurrently
@@ -154,7 +154,7 @@ class TestPerformanceScenarios:
         
         # Verify all conversations completed successfully
         for result in successful_results:
-            assert result['status'] in [ConversationStatus.COMPLETED, ConversationStatus.MAX_TURNS_REACHED]
+            assert result['status'] in [ConversationStatus.COMPLETED.value, ConversationStatus.TERMINATED.value]
             assert result['turns'] > 0
     
     @pytest.mark.asyncio
@@ -204,7 +204,7 @@ class TestPerformanceScenarios:
                     # Performance assertions for context-heavy conversation
                     assert duration < 20.0  # Should handle context management efficiently
                     assert memory_used < 100  # Context management shouldn't use excessive memory
-                    assert result.status in [ConversationStatus.COMPLETED, ConversationStatus.MAX_TURNS_REACHED]
+                    assert result["status"] in [ConversationStatus.COMPLETED.value, ConversationStatus.TERMINATED.value]
     
     def test_memory_usage_patterns(self, performance_config):
         """Test memory usage patterns during system operation."""
@@ -256,7 +256,7 @@ class TestPerformanceScenarios:
                     with patch.object(orchestrator.agent_b, '_call_llm', side_effect=mock_quick_response):
                         
                         result = await orchestrator.run_conversation(f"throughput-{conv_id}")
-                        return result.status in [ConversationStatus.COMPLETED, ConversationStatus.MAX_TURNS_REACHED]
+                        return result["status"] in [ConversationStatus.COMPLETED.value, ConversationStatus.TERMINATED.value]
         
         # Measure throughput over a time period
         start_time = time.time()
@@ -359,6 +359,19 @@ class TestPerformanceScenarios:
 class TestScalabilityScenarios:
     """Test system scalability under various conditions."""
     
+    @pytest.fixture
+    def performance_config(self):
+        """Create a performance-optimized configuration."""
+        return {
+            "agents": {
+                "agent_a": {"name": "Fast Agent A", "system_prompt": "You are a fast-responding agent."},
+                "agent_b": {"name": "Fast Agent B", "system_prompt": "You are another fast-responding agent."}
+            },
+            "model": {"model_name": "gpt-3.5-turbo", "temperature": 0.3, "max_tokens": 500},
+            "conversation": {"max_turns": 4, "context_window_strategy": "truncate", "turn_timeout": 10.0},
+            "logging": {"log_level": "WARNING", "output_directory": "./perf_logs", "real_time_display": False}
+        }
+    
     @pytest.mark.asyncio
     async def test_scaling_with_conversation_length(self, performance_config):
         """Test how system scales with conversation length."""
@@ -389,8 +402,8 @@ class TestScalabilityScenarios:
                         performance_results.append({
                             'turns': max_turns,
                             'duration': end_time - start_time,
-                            'actual_turns': result.current_turn,
-                            'status': result.status
+                            'actual_turns': result["total_turns"],
+                            'status': result["status"]
                         })
         
         # Analyze scaling characteristics
@@ -401,7 +414,7 @@ class TestScalabilityScenarios:
             
             # Verify conversations reached expected length
             assert result['actual_turns'] <= result['turns']
-            assert result['status'] in [ConversationStatus.COMPLETED, ConversationStatus.MAX_TURNS_REACHED]
+            assert result['status'] in [ConversationStatus.COMPLETED.value, ConversationStatus.TERMINATED.value]
     
     @pytest.mark.asyncio
     async def test_concurrent_user_simulation(self, performance_config):
@@ -450,8 +463,8 @@ class TestScalabilityScenarios:
                             'user_id': user_id,
                             'pattern': pattern,
                             'duration': end_time - start_time,
-                            'status': result.status,
-                            'turns': result.current_turn
+                            'status': result["status"],
+                            'turns': result["total_turns"]
                         }
         
         # Run concurrent user simulations
@@ -469,5 +482,5 @@ class TestScalabilityScenarios:
         
         # Verify each user's conversation completed successfully
         for result in successful_results:
-            assert result['status'] in [ConversationStatus.COMPLETED, ConversationStatus.MAX_TURNS_REACHED]
+            assert result['status'] in [ConversationStatus.COMPLETED.value, ConversationStatus.TERMINATED.value]
             assert result['turns'] > 0

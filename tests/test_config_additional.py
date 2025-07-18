@@ -95,8 +95,9 @@ class TestConfigurationLoaderAdditional:
         
         with patch.dict(os.environ, {"TEST_PROMPT": "Test system prompt", "TEST_LOG_DIR": "/tmp/logs"}):
             with patch("pathlib.Path.exists", return_value=True):
-                with patch("builtins.open", mock_open(read_data=config_with_env)):
-                    config = loader.load_from_file("test.yaml")
+                with patch("pathlib.Path.is_file", return_value=True):
+                    with patch("builtins.open", mock_open(read_data=config_with_env)):
+                        config = loader.load_from_file("test.yaml")
                     
                     assert config.agent_a.system_prompt == "Test system prompt"
                     assert config.logging.output_directory == "/tmp/logs"
@@ -157,8 +158,9 @@ class TestConfigurationLoaderAdditional:
         """
         
         with patch("pathlib.Path.exists", return_value=True):
-            with patch("builtins.open", mock_open(read_data=config_with_optionals)):
-                config = loader.load_from_file("test.yaml")
+            with patch("pathlib.Path.is_file", return_value=True):
+                with patch("builtins.open", mock_open(read_data=config_with_optionals)):
+                    config = loader.load_from_file("test.yaml")
             
             # Check optional agent fields
             assert hasattr(config.agent_a, 'temperature')

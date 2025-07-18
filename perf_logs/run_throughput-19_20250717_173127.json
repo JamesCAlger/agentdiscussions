@@ -1,0 +1,100 @@
+{
+  "run_id": "throughput-19",
+  "start_time": "2025-07-17T17:31:27.748230",
+  "end_time": "2025-07-17T17:31:27.749799",
+  "total_turns": 2,
+  "agent_metrics": {
+    "agent_a": {
+      "response_time": 0.0002892017364501953,
+      "token_count": 4,
+      "model_calls": 1,
+      "errors": []
+    },
+    "agent_b": {
+      "response_time": 0.0002815723419189453,
+      "token_count": 4,
+      "model_calls": 1,
+      "errors": []
+    }
+  },
+  "conversation_history": [
+    {
+      "agent_id": "agent_a",
+      "content": "Quick response 19",
+      "timestamp": "2025-07-17T17:31:27.749353",
+      "token_count": 4,
+      "metadata": {
+        "response_time": 9.393692016601562e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 0,
+        "available_tokens": 8000
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Quick response 19",
+      "timestamp": "2025-07-17T17:31:27.749705",
+      "token_count": 4,
+      "metadata": {
+        "response_time": 8.487701416015625e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 12,
+        "available_tokens": 7988
+      }
+    }
+  ],
+  "context_window_snapshots": [],
+  "configuration": {
+    "agents": {
+      "agent_a": {
+        "name": "Fast Agent A",
+        "system_prompt": "You are a fast-responding agent."
+      },
+      "agent_b": {
+        "name": "Fast Agent B",
+        "system_prompt": "You are another fast-responding agent."
+      }
+    },
+    "model": {
+      "model_name": "gpt-3.5-turbo",
+      "temperature": 0.3,
+      "max_tokens": 500,
+      "top_p": 1.0,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "conversation": {
+      "max_turns": 2,
+      "initial_prompt": null,
+      "context_window_strategy": "truncate",
+      "context_window_size": 8000,
+      "turn_timeout": 10.0
+    },
+    "logging": {
+      "log_level": "WARNING",
+      "output_directory": "./perf_logs",
+      "real_time_display": false,
+      "export_formats": [
+        "json"
+      ],
+      "save_conversation_history": true,
+      "save_telemetry": true
+    }
+  },
+  "metadata": {
+    "total_errors": 0,
+    "error_details": []
+  }
+}

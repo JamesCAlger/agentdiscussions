@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 import pytest
 
-from src.agentic_conversation.orchestrator import ConversationOrchestrator
+from src.agentic_conversation.orchestrator import ConversationOrchestrator, OrchestrationError
 from src.agentic_conversation.config import ConfigurationLoader
 from src.agentic_conversation.models import SystemConfig, ConversationStatus
 
@@ -497,11 +497,9 @@ class TestErrorScenarios:
             with patch.object(orchestrator.agent_a, 'generate_response', side_effect=mock_slow_response):
                 with patch.object(orchestrator.agent_b, 'generate_response', side_effect=mock_slow_response):
                     
-                    result = await orchestrator.run_conversation("timeout-test")
-                    
-                    # System should handle timeouts gracefully
-                    assert result is not None
-                    # Result status depends on implementation - could be ERROR or COMPLETED with fewer turns
+                    # Timeout should raise an OrchestrationError
+                    with pytest.raises(OrchestrationError, match="timed out"):
+                        await orchestrator.run_conversation("timeout-test")
     
     def test_invalid_configuration_handling(self):
         """Test handling of invalid configurations."""

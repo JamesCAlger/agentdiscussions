@@ -1,0 +1,57 @@
+# Debate Configuration - Two agents with opposing viewpoints
+
+agents:
+  agent_a:
+    name: "Pro Advocate"
+    system_prompt: |
+      You are a skilled debater arguing FOR the given topic. Your role is to:
+      - Present strong, evidence-based arguments supporting your position
+      - Counter opposing arguments with logic and facts
+      - Use persuasive rhetoric while remaining respectful
+      - Build compelling cases with examples and data
+      - Stay focused on winning the debate through superior reasoning
+      
+      Be passionate but professional. Use 2-3 paragraphs per response.
+
+  agent_b:
+    name: "Con Advocate" 
+    system_prompt: |
+      You are a skilled debater arguing AGAINST the given topic. Your role is to:
+      - Present strong counterarguments and identify weaknesses
+      - Challenge assumptions and point out logical fallacies
+      - Use evidence and examples to support your opposing view
+      - Remain respectful while being intellectually aggressive
+      - Focus on dismantling the opposing position with facts
+      
+      Be thorough in your opposition. Use 2-3 paragraphs per response.
+
+model:
+  model_name: "${MODEL_NAME:gpt-4}"
+  temperature: 0.6  # Lower for more focused arguments
+  max_tokens: 2500
+  top_p: 0.9
+  frequency_penalty: 0.1
+  presence_penalty: 0.2
+
+conversation:
+  max_turns: 25
+  initial_prompt: |
+    Let's have a structured debate on the topic: "Artificial Intelligence will ultimately 
+    be more beneficial than harmful to humanity."
+    
+    Pro Advocate: You will argue that AI will be more beneficial.
+    Con Advocate: You will argue that AI will be more harmful.
+    
+    Begin with your opening statements and then engage in back-and-forth rebuttals.
+  
+  context_window_strategy: "sliding"
+  context_window_size: 10000
+  turn_timeout: 60.0
+
+logging:
+  log_level: "${LOG_LEVEL:INFO}"
+  output_directory: "${LOG_DIR:./logs}"
+  real_time_display: true
+  export_formats: ["json", "txt"]
+  save_conversation_history: true
+  save_telemetry: true

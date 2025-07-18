@@ -1,0 +1,424 @@
+{
+  "run_id": "scaling-20",
+  "start_time": "2025-07-17T17:31:28.077660",
+  "end_time": "2025-07-17T17:31:28.091886",
+  "total_turns": 20,
+  "agent_metrics": {
+    "agent_a": {
+      "response_time": 0.005984306335449219,
+      "token_count": 60,
+      "model_calls": 10,
+      "errors": []
+    },
+    "agent_b": {
+      "response_time": 0.0064203739166259766,
+      "token_count": 60,
+      "model_calls": 10,
+      "errors": []
+    }
+  },
+  "conversation_history": [
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.078806",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 0.0001270771026611328,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 0,
+        "available_tokens": 8000
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.079286",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 0.00011491775512695312,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 14,
+        "available_tokens": 7986
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.079699",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 8.392333984375e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 28,
+        "available_tokens": 7972
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.080100",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.367134094238281e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 42,
+        "available_tokens": 7958
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.080521",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 8.0108642578125e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 56,
+        "available_tokens": 7944
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.080971",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 6.985664367675781e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 70,
+        "available_tokens": 7930
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.081477",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.081031799316406e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 84,
+        "available_tokens": 7916
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.082015",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.605552673339844e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 98,
+        "available_tokens": 7902
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.082587",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 6.914138793945312e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 112,
+        "available_tokens": 7888
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.083199",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.009506225585938e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 126,
+        "available_tokens": 7874
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.083858",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 6.842613220214844e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 140,
+        "available_tokens": 7860
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.084547",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.82012939453125e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 154,
+        "available_tokens": 7846
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.085289",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.009506225585938e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 168,
+        "available_tokens": 7832
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.086096",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.796287536621094e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 182,
+        "available_tokens": 7818
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.086903",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 6.890296936035156e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 196,
+        "available_tokens": 7804
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.087754",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 6.842613220214844e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 210,
+        "available_tokens": 7790
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.088673",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.05718994140625e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 224,
+        "available_tokens": 7776
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.089611",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 6.985664367675781e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 238,
+        "available_tokens": 7762
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.090601",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 7.176399230957031e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 252,
+        "available_tokens": 7748
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Response for 20-turn conversation",
+      "timestamp": "2025-07-17T17:31:28.091780",
+      "token_count": 6,
+      "metadata": {
+        "response_time": 0.0002319812774658203,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 266,
+        "available_tokens": 7734
+      }
+    }
+  ],
+  "context_window_snapshots": [],
+  "configuration": {
+    "agents": {
+      "agent_a": {
+        "name": "Fast Agent A",
+        "system_prompt": "You are a fast-responding agent."
+      },
+      "agent_b": {
+        "name": "Fast Agent B",
+        "system_prompt": "You are another fast-responding agent."
+      }
+    },
+    "model": {
+      "model_name": "gpt-3.5-turbo",
+      "temperature": 0.3,
+      "max_tokens": 500,
+      "top_p": 1.0,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "conversation": {
+      "max_turns": 20,
+      "initial_prompt": null,
+      "context_window_strategy": "truncate",
+      "context_window_size": 8000,
+      "turn_timeout": 10.0
+    },
+    "logging": {
+      "log_level": "WARNING",
+      "output_directory": "./perf_logs",
+      "real_time_display": false,
+      "export_formats": [
+        "json"
+      ],
+      "save_conversation_history": true,
+      "save_telemetry": true
+    }
+  },
+  "metadata": {
+    "total_errors": 0,
+    "error_details": []
+  }
+}

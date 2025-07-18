@@ -636,22 +636,26 @@ class LoggingConfig:
 
 
 @dataclass
-class SystemConfig:
+class ToolConfig:
     """
-    Complete system configuration combining all configuration sections.
+    Base configuration for tools.
     
     Attributes:
-        agent_a: Configuration for the first agent
-        agent_b: Configuration for the second agent
-        model: Language model configuration
-        conversation: Conversation behavior configuration
-        logging: Logging and telemetry configuration
+        name: Name of the tool
+        enabled: Whether the tool is enabled
+        timeout: Maximum execution time in seconds
+        max_retries: Maximum number of retry attempts
+        metadata: Additional tool-specific metadata
     """
-    agent_a: AgentConfig
-    agent_b: AgentConfig
-    model: ModelConfig
-    conversation: ConversationConfig
-    logging: LoggingConfig
+    name: str
+    enabled: bool = True
+    timeout: float = 30.0
+    max_retries: int = 3
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def validate(self) -> List[str]:
+        """Validate the tool configuration and return any error messages."""
+        err
     
     def validate(self) -> List[str]:
         """Validate the complete system configuration and return any error messages."""

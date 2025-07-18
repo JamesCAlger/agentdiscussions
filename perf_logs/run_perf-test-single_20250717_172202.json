@@ -1,0 +1,136 @@
+{
+  "run_id": "perf-test-single",
+  "start_time": "2025-07-17T17:22:02.167131",
+  "end_time": "2025-07-17T17:22:02.174165",
+  "total_turns": 4,
+  "agent_metrics": {
+    "agent_a": {
+      "response_time": 0.003882169723510742,
+      "token_count": 9,
+      "model_calls": 2,
+      "errors": []
+    },
+    "agent_b": {
+      "response_time": 0.0009074211120605469,
+      "token_count": 8,
+      "model_calls": 2,
+      "errors": []
+    }
+  },
+  "conversation_history": [
+    {
+      "agent_id": "agent_a",
+      "content": "Quick response 1",
+      "timestamp": "2025-07-17T17:22:02.172345",
+      "token_count": 4,
+      "metadata": {
+        "response_time": 0.00016617774963378906,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 0,
+        "available_tokens": 8000
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Fast reply 2",
+      "timestamp": "2025-07-17T17:22:02.173144",
+      "token_count": 4,
+      "metadata": {
+        "response_time": 0.0002307891845703125,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 12,
+        "available_tokens": 7988
+      }
+    },
+    {
+      "agent_id": "agent_a",
+      "content": "Rapid answer 3",
+      "timestamp": "2025-07-17T17:22:02.173647",
+      "token_count": 5,
+      "metadata": {
+        "response_time": 0.00010156631469726562,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 24,
+        "available_tokens": 7976
+      }
+    },
+    {
+      "agent_id": "agent_b",
+      "content": "Swift response 4",
+      "timestamp": "2025-07-17T17:22:02.174045",
+      "token_count": 4,
+      "metadata": {
+        "response_time": 8.273124694824219e-05,
+        "model_calls": 1,
+        "confidence": null,
+        "reasoning": null,
+        "errors": [],
+        "model_name": "gpt-3.5-turbo",
+        "temperature": 0.3,
+        "max_tokens": 500,
+        "context_tokens": 37,
+        "available_tokens": 7963
+      }
+    }
+  ],
+  "context_window_snapshots": [],
+  "configuration": {
+    "agents": {
+      "agent_a": {
+        "name": "Fast Agent A",
+        "system_prompt": "You are a fast-responding agent."
+      },
+      "agent_b": {
+        "name": "Fast Agent B",
+        "system_prompt": "You are another fast-responding agent."
+      }
+    },
+    "model": {
+      "model_name": "gpt-3.5-turbo",
+      "temperature": 0.3,
+      "max_tokens": 500,
+      "top_p": 1.0,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "conversation": {
+      "max_turns": 4,
+      "initial_prompt": null,
+      "context_window_strategy": "truncate",
+      "context_window_size": 8000,
+      "turn_timeout": 10.0
+    },
+    "logging": {
+      "log_level": "WARNING",
+      "output_directory": "./perf_logs",
+      "real_time_display": false,
+      "export_formats": [
+        "json"
+      ],
+      "save_conversation_history": true,
+      "save_telemetry": true
+    }
+  },
+  "metadata": {
+    "total_errors": 0,
+    "error_details": []
+  }
+}

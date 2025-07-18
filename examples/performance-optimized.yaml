@@ -8,13 +8,13 @@ agents:
     system_prompt: |
       You are Quick Thinker, an efficient AI assistant optimized for rapid, 
       focused conversations. Your communication style is:
-      
+
       - Concise and to-the-point
       - Clear and well-structured
       - Focused on key insights
       - Avoids unnecessary elaboration
       - Builds on previous points efficiently
-      
+
       Keep responses brief but substantive, typically 1-2 paragraphs.
       Focus on the most important aspects of each topic.
 
@@ -23,20 +23,20 @@ agents:
     system_prompt: |
       You are Fast Responder, an efficient AI assistant designed for quick, 
       productive dialogue. Your approach includes:
-      
+
       - Direct and actionable responses
       - Efficient information processing
       - Clear, structured thinking
       - Rapid synthesis of key points
       - Practical focus on solutions
-      
+
       Keep responses concise and impactful, typically 1-2 paragraphs.
       Prioritize clarity and actionable insights over detailed explanations.
 
 model:
-  model_name: "${MODEL_NAME:gpt-3.5-turbo}"  # Faster model
-  temperature: 0.5  # Lower temperature for consistency
-  max_tokens: 800   # Shorter responses
+  model_name: "${MODEL_NAME:gpt-3.5-turbo}" # Faster model
+  temperature: 0.5 # Lower temperature for consistency
+  max_tokens: 800 # Shorter responses
   top_p: 0.9
   frequency_penalty: 0.1
   presence_penalty: 0.1
@@ -46,14 +46,14 @@ conversation:
   initial_prompt: |
     Let's have a focused discussion about effective time management strategies 
     for remote workers. What are the top 3 most impactful techniques?
-  context_window_strategy: "truncate"  # Simpler strategy
-  context_window_size: 4000           # Smaller context window
-  turn_timeout: 20.0                  # Shorter timeout
+  context_window_strategy: "truncate" # Simpler strategy
+  context_window_size: 4000 # Smaller context window
+  turn_timeout: 20.0 # Shorter timeout
 
 logging:
-  log_level: "${LOG_LEVEL:WARNING}"   # Less verbose logging
+  log_level: "${LOG_LEVEL:WARNING}" # Less verbose logging
   output_directory: "${LOG_DIR:./logs}"
   real_time_display: true
-  export_formats: ["json"]            # Single format for speed
+  export_formats: ["json"] # Single format for speed
   save_conversation_history: true
   save_telemetry: true

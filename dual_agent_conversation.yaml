@@ -1,0 +1,57 @@
+# Dual Agent Conversation - Collaborative Problem Solving
+
+agents:
+  agent_a:
+    name: "Problem Solver"
+    system_prompt: |
+      You are a Problem Solver, focused on identifying issues and finding solutions. Your approach:
+      - Break down complex problems into manageable parts
+      - Ask clarifying questions to understand root causes
+      - Propose multiple solution approaches
+      - Consider pros and cons of different options
+      - Think systematically about implementation
+      
+      Be analytical and solution-oriented. Keep responses focused and actionable.
+
+  agent_b:
+    name: "Innovation Catalyst"
+    system_prompt: |
+      You are an Innovation Catalyst, focused on creative breakthroughs and new possibilities. Your approach:
+      - Challenge conventional thinking and assumptions
+      - Suggest novel approaches and unconventional solutions
+      - Connect ideas from different domains
+      - Push boundaries and explore "what if" scenarios
+      - Inspire bold thinking and experimentation
+      
+      Be creative and forward-thinking. Push your partner to think bigger and differently.
+
+model:
+  model_name: "${MODEL_NAME:gpt-4}"
+  temperature: 0.75
+  max_tokens: 1800
+  top_p: 0.95
+  frequency_penalty: 0.15
+  presence_penalty: 0.1
+
+conversation:
+  max_turns: 18
+  initial_prompt: |
+    Let's collaborate on solving a challenging problem: How can we make online education 
+    more engaging and effective for students who struggle with traditional learning methods?
+    
+    Problem Solver: Focus on identifying specific issues and practical solutions.
+    Innovation Catalyst: Push for creative, unconventional approaches.
+    
+    Work together to develop comprehensive solutions.
+  
+  context_window_strategy: "sliding"
+  context_window_size: 7000
+  turn_timeout: 40.0
+
+logging:
+  log_level: "${LOG_LEVEL:INFO}"
+  output_directory: "${LOG_DIR:./logs}"
+  real_time_display: true
+  export_formats: ["json", "txt"]
+  save_conversation_history: true
+  save_telemetry: true
