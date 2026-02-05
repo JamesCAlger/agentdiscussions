@@ -137,6 +137,10 @@ cython_debug/
 # VS Code
 .vscode/
 
+# AI tool configs
+.claude/
+.kiro/
+
 # Project specific
 logs/
 test_logs/

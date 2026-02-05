@@ -1,11 +1,11 @@
 # Agent Discussions: Context Engineering & Context Rot Research
 
-A framework for running multi-turn conversations between two AI agents, built to test different context engineering strategies and investigate **context rot** -- the tendency for LLM performance to degrade as the context window fills up.
+A framework for running multi-turn conversations between two AI agents, built to test different context engineering strategies and investigate **context decay** -- the tendency for LLM performance to degrade as the context window fills up.
 
 ## Research Questions
 
 1. **How do different context management strategies affect conversation quality over extended dialogues?** Sliding window vs. truncation vs. full history -- when does each break down?
-2. **At what point does context rot set in?** As conversation history grows, do agents start repeating themselves, losing coherence, or hallucinating more?
+2. **At what point does context decay set in?** As conversation history grows, do agents start repeating themselves, losing coherence, or hallucinating more?
 3. **Can context engineering mitigate degradation?** Does summarizing older context, compressing history, or selectively pruning messages preserve quality better than naive truncation?
 
 ## How It Works
@@ -99,7 +99,7 @@ examples/                 # Pre-built experiment configurations
 
 ## Key Components
 
-**Context Manager** (`context_manager.py`) -- The core research component. Implements pluggable strategies for managing what goes into the context window at each turn. This is where the context rot mitigation logic lives.
+**Context Manager** (`context_manager.py`) -- The core research component. Implements pluggable strategies for managing what goes into the context window at each turn. This is where the context decay mitigation logic lives.
 
 **Token Counter** (`token_counter.py`) -- Accurate token counting using tiktoken. Tracks per-turn and cumulative token usage to map when degradation correlates with context saturation.
 
